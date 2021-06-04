@@ -4,13 +4,12 @@ import { useForm } from 'react-hook-form';
 import { RFValue } from 'react-native-responsive-fontsize';
 import * as Yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import uuid from 'react-native-uuid';
-
-import { storage } from '../../config/storage';
+import { useNavigation } from '@react-navigation/core';
 
 import { Input } from '../../components/Form/Input';
 import { Button } from '../../components/Form/Button';
+
+import { useStorageData } from '../../hooks/storage';
 
 import {
   Container,
@@ -31,7 +30,9 @@ const schema = Yup.object().shape({
 })
 
 export function RegisterLoginData() {
-  const { loginsStorageKey } = storage;
+  const { saveStorageData } = useStorageData();
+  const navigation = useNavigation();
+
   const {
     control,
     handleSubmit,
@@ -44,22 +45,13 @@ export function RegisterLoginData() {
   });
 
   async function handleRegister(formData: FormData) {
-    const newLoginData = {
-      id: String(uuid.v4()),
-      ...formData
-    }
-
     try {
-      const data = await AsyncStorage.getItem(loginsStorageKey);
-      const logins = data ? JSON.parse(data) : [];
-
-      const newLogin = [...logins, newLoginData];
-      await AsyncStorage.setItem(loginsStorageKey, JSON.stringify(newLogin));
+      await saveStorageData(formData);
 
       reset();
+      navigation.navigate('Home');
     } catch (error) {
-      console.error(error.message);
-      Alert.alert('Algo deu errado', error.message);
+      Alert.alert('Error', error.message);
     }
   }
 
